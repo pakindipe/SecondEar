@@ -9,7 +9,7 @@
     "dev:api": "tsx watch server/index.ts",
     "dev:web": "vite",
     "build": "tsc --noEmit && vite build",
-    "start": "NODE_ENV=production tsx server/index.ts",
+    "start": "tsx server/index.ts --production",
     "eval": "tsx eval/run-eval.ts",
     "typecheck": "tsc --noEmit"
   },

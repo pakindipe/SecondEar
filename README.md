@@ -12,43 +12,90 @@ The user can answer it hands-free: *"Second Ear, is this real?"* / *"Second Ear,
 
 ---
 
-## Quick start
+## Run it in 2 minutes
 
-Requires **Node 20+** and **Chrome or Edge** (for the built-in speech APIs).
+**No API keys and no accounts needed.** Everything below runs locally.
+
+### 1. Check you have the prerequisites
+
+| You need | Check by running | If it's missing |
+|---|---|---|
+| **Node.js 20 or newer** | `node -v` (should print `v20` or higher) | Install the LTS version from [nodejs.org](https://nodejs.org) |
+| **Git** | `git --version` | Install from [git-scm.com](https://git-scm.com), or download the ZIP from GitHub (green **Code** button → **Download ZIP**) |
+| **Chrome or Edge** | – | Speech recognition (Speaking mode) only works in these. Everything else also works in Safari and Firefox. |
+
+### 2. Download the code
+
+```bash
+git clone https://github.com/pakindipe/SecondEar.git
+```
+
+```bash
+cd SecondEar
+```
+
+### 3. Install dependencies (about 30 seconds)
 
 ```bash
 npm install
 ```
 
+### 4. Start the app
+
 ```bash
 npm run dev
 ```
 
-Open **http://localhost:5173**, pick a call, and press **Start incoming call**, then **Accept** on the phone.
+Leave this terminal open. When it's ready you'll see two lines like:
 
-**No API keys are needed.** Without keys, Second Ear uses its rule-based risk engine and the browser's built-in speech recognition and text-to-speech. To add the LLM risk engine as well:
-
-```bash
-cp .env.example .env   # then set ANTHROPIC_API_KEY (or OPENAI_API_KEY)
+```
+[api] Second Ear API on http://localhost:8787 (risk engine: rules only)
+[web]   ➜  Local:   http://localhost:5173/
 ```
 
-Restart `npm run dev`. The LLM engine switches on automatically, and the status line in the header shows `rules + Claude`.
+### 5. Open it and take a call
 
-### Production build (single server)
+1. Go to **http://localhost:5173** in Chrome.
+2. Under **Choose a call**, pick **01 "Bank fraud team" wants your code**.
+3. Leave **Watching** and **Play audio** selected, and turn your volume up.
+4. Press **Start incoming call**, then press the green **Accept** button on the phone.
+5. Listen for the two-note chime. That's Second Ear whispering. Its words appear in the phone's Dynamic Island, and the analysis and transcript fill in on the right.
 
-```bash
-npm run build && npm start
-```
+Then try **03 Genuine bank fraud check**. It mentions fraud and PINs, but Second Ear should stay silent.
 
-Serves the app and the API on http://localhost:8787.
+**To stop the app:** press `Ctrl + C` in the terminal.
 
-### Evaluation
+![Second Ear start screen: call list on the left, iPhone-style call screen in the middle, explanation on the right](docs/screenshot.webp)
 
-```bash
-npm run eval
-```
+### Troubleshooting
 
-Scores 18 labelled call transcripts (11 scam, 7 genuine) with each engine. It adds the LLM column automatically if a key is set.
+| Problem | Fix |
+|---|---|
+| `npm: command not found` | Node.js isn't installed. See step 1. |
+| No sound | Check **Play audio** is ticked and your system volume is up. Voices come from your OS: macOS and Windows include them, but some Linux setups have none. In that case the call still runs silently at normal pace. |
+| `EADDRINUSE` / address already in use | Another program is using port 8787. Often it's an earlier `npm run dev` still running in another terminal. Close it with `Ctrl + C` and try again. |
+| Page is on a different port than 5173 | Something else was using 5173, so Vite picked the next free port. Use the URL printed in the terminal. |
+| Speaking mode: "Microphone blocked" | Click the camera/mic icon in Chrome's address bar and allow the microphone, or just type your replies. |
+| Speaking mode: the mic hears the caller | Use headphones. |
+
+### Optional: add the LLM risk engine
+
+The rules engine works on its own. To also run an LLM engine alongside it (it's aimed at scams that are reworded to avoid keywords):
+
+1. Copy the example settings file. On Windows use `copy` instead of `cp`.
+   ```bash
+   cp .env.example .env
+   ```
+2. Open `.env` and paste your key after `ANTHROPIC_API_KEY=` (or `OPENAI_API_KEY=`). Get one from [console.anthropic.com](https://console.anthropic.com) or [platform.openai.com](https://platform.openai.com). A Claude Pro or ChatGPT Plus subscription doesn't include API access.
+3. Stop the app (`Ctrl + C`) and run `npm run dev` again. The header now reads `rules + Claude` (or `rules + OpenAI`).
+
+### Other commands
+
+| Command | What it does |
+|---|---|
+| `npm run eval` | Scores 18 labelled call transcripts (11 scam, 7 genuine) and prints how many each engine catches. It includes the LLM automatically if a key is set. |
+| `npm run build && npm start` | Production build, served as a single server at http://localhost:8787. |
+| `npm run typecheck` | TypeScript check. |
 
 ---
 
@@ -67,6 +114,8 @@ Scenarios (all organisations are fictional):
 4. **GP appointment reminder.** Baseline normal call.
 
 Untick **Play audio** to run silently at faster speed (useful for a quick look, or if the browser has no voices).
+
+![The four phone states: incoming call, in call with Second Ear listening in the Dynamic Island, a whisper expanding the island, and the call-ended verdict](docs/call-states.png)
 
 ---
 

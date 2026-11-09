@@ -32,7 +32,8 @@ app.post("/api/analyze", async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV === "production") {
+// --production flag (not NODE_ENV=...) so `npm start` also works in Windows shells.
+if (process.env.NODE_ENV === "production" || process.argv.includes("--production")) {
   const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../dist");
   app.use(express.static(dist));
   app.get("/{*splat}", (_req, res) => res.sendFile(path.join(dist, "index.html")));
