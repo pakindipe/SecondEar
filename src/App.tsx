@@ -132,17 +132,78 @@ function useEngine(engine: CallEngine | null): CallState | null {
 function Handset({ engine, onReset }: { engine: CallEngine | null; onReset: () => void }) {
   const s = useEngine(engine);
   const level = s ? riskLevel(s.effective.risk) : "safe";
+  const lastWhisper = s?.whispers[s.whispers.length - 1];
+  const whispering = s?.status === "active" && s.phase === "whisper" && lastWhisper ? lastWhisper : null;
+  const listening = s?.status === "active";
 
   return (
     <div className={`handset level-${level}`}>
-      <div className="screen">
-        <div className="statusbar" aria-hidden>
-          <span>9:41</span>
-          <span className="notch" />
-          <span>●●●</span>
-        </div>
+      <div className={`screen ${s ? `status-${s.status}` : "status-idle"}`}>
+        <StatusBar />
+        <DynamicIsland listening={!!listening} whisper={whispering} level={level} />
         {!s || !engine ? <IdleScreen /> : <CallScreen s={s} engine={engine} onReset={onReset} />}
+        <div className="home-indicator" aria-hidden />
       </div>
+    </div>
+  );
+}
+
+function StatusBar() {
+  return (
+    <div className="statusbar" aria-hidden>
+      <span className="clock">9:41</span>
+      <span className="status-icons">
+        <svg viewBox="0 0 18 12" width="18" height="12">
+          <rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor" />
+          <rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor" />
+          <rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor" />
+          <rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" />
+        </svg>
+        <svg viewBox="0 0 16 12" width="16" height="12">
+          <path fill="currentColor" d="M8 2.6c2.2 0 4.2.9 5.7 2.3l1.1-1.1A9.6 9.6 0 0 0 8 1 9.6 9.6 0 0 0 1.2 3.8l1.1 1.1A8 8 0 0 1 8 2.6zm0 3.3c1.3 0 2.5.5 3.4 1.3l1.1-1.1A6.3 6.3 0 0 0 8 4.3a6.3 6.3 0 0 0-4.5 1.8l1.1 1.1c.9-.8 2.1-1.3 3.4-1.3zM8 9.2c.5 0 .9.2 1.2.5L8 11 6.8 9.7c.3-.3.7-.5 1.2-.5z" />
+        </svg>
+        <svg viewBox="0 0 27 12" width="27" height="12">
+          <rect x="0.5" y="0.5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity="0.4" />
+          <rect x="2" y="2" width="17" height="8" rx="2" fill="currentColor" />
+          <path d="M25 4v4c.8-.3 1.4-1.1 1.4-2s-.6-1.7-1.4-2z" fill="currentColor" opacity="0.4" />
+        </svg>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Second Ear as a Live Activity in the Dynamic Island: a small waveform while it listens,
+ * expanding into a banner when it whispers. This is how a real iOS version would surface it.
+ */
+function DynamicIsland({ listening, whisper, level }: { listening: boolean; whisper: { text: string; level: string } | null; level: string }) {
+  return (
+    <div className={`island ${whisper ? "expanded" : listening ? "compact" : ""} ${whisper?.level ?? ""}`} aria-live="polite">
+      {whisper ? (
+        <div className="island-body">
+          <div className="island-head">
+            <span className="app-glyph" aria-hidden>
+              <svg viewBox="0 0 20 20" width="20" height="20">
+                <path d="M10 3.5a5 5 0 0 1 5 5c0 2.2-1.4 3-2.2 3.8-.6.6-.8 1.2-.8 2a2.5 2.5 0 0 1-4.6 1.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M7.6 8.6a2.4 2.4 0 0 1 4.8 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="island-app">Second Ear</span>
+            <span className="island-meta">only you hear this</span>
+          </div>
+          <p className="island-text">{whisper.text}</p>
+        </div>
+      ) : listening ? (
+        <>
+          <span className={`island-dot level-${level}`} aria-hidden />
+          <span className="island-wave" aria-label="Second Ear is listening">
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -158,65 +219,74 @@ function IdleScreen() {
 
 function CallScreen({ s, engine, onReset }: { s: CallState; engine: CallEngine; onReset: () => void }) {
   const elapsed = s.answeredAt ? (s.status === "ended" ? (s.summary?.durationMs ?? 0) : s.now - s.answeredAt) : 0;
-  const lastWhisper = s.whispers[s.whispers.length - 1];
-  const whispering = s.phase === "whisper" && lastWhisper;
+  const showReply = s.mode === "live" && s.phase === "user";
 
   return (
-    <div className={`call status-${s.status}`}>
-      <div className="who-calls">
-        <div className="avatar" aria-hidden>
-          {s.scenario.callerId.slice(0, 1)}
-        </div>
-        <div className="name">{s.scenario.callerId}</div>
-        <div className="sub">
-          {s.status === "ringing" && "incoming call"}
+    <div className="call">
+      <div className="caller-block">
+        {s.status === "ringing" && <div className="caller-sub">mobile</div>}
+        <div className="caller-name">{s.scenario.callerId}</div>
+        <div className="caller-sub">
+          {s.status === "ringing" && s.scenario.number}
           {s.status === "active" && fmtTime(elapsed)}
-          {s.status === "ended" && `call ended · ${fmtTime(elapsed)}`}
+          {s.status === "ended" && `Call Ended · ${fmtTime(elapsed)}`}
         </div>
-        <div className="sub dim">{s.scenario.number}</div>
       </div>
 
       {s.status === "ringing" && (
-        <div className="round-buttons">
-          <RoundButton kind="decline" label="Decline" onClick={() => void engine.hangup("user")} />
-          <RoundButton kind="accept" label="Accept" onClick={() => void engine.answer()} />
+        <div className="ring-actions">
+          <div className="minor-actions" aria-hidden>
+            <span>
+              <Icon name="alarm" />
+              Remind Me
+            </span>
+            <span>
+              <Icon name="message" />
+              Message
+            </span>
+          </div>
+          <div className="major-actions">
+            <CallButton kind="decline" label="Decline" onClick={() => void engine.hangup("user")} />
+            <CallButton kind="accept" label="Accept" onClick={() => void engine.answer()} />
+          </div>
         </div>
       )}
 
       {s.status === "active" && (
-        <>
-          <div className="caption-area" aria-live="polite">
-            {whispering ? (
-              <div className={`caption ${lastWhisper.level}`}>
-                <span className="caption-who">Second Ear · only you hear this</span>
-                {lastWhisper.text}
-              </div>
-            ) : (
-              <div className="listening">
-                <span className="bars" aria-hidden>
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                {s.phase === "caller" ? "Caller speaking" : s.mode === "auto" ? "You're replying" : "Your turn"}
-              </div>
-            )}
-          </div>
-
-          {s.mode === "live" && s.phase === "user" && (
+        <div className="in-call">
+          {showReply ? (
             <ReplyBox engine={engine} suggestion={s.scenario.turns[s.turn]?.reply ?? ""} interim={s.interim} error={s.sttError} />
+          ) : (
+            <div className="grid-buttons" aria-hidden>
+              {(
+                [
+                  ["mute", "mute"],
+                  ["keypad", "keypad"],
+                  ["speaker", "audio"],
+                  ["plus", "add call"],
+                  ["video", "FaceTime"],
+                  ["person", "contacts"],
+                ] as const
+              ).map(([icon, label]) => (
+                <span key={label} className="grid-btn">
+                  <span className="grid-disc">
+                    <Icon name={icon} />
+                  </span>
+                  {label}
+                </span>
+              ))}
+            </div>
           )}
-
-          <div className="round-buttons single">
-            <RoundButton kind="decline" label="End" onClick={() => void engine.hangup("user")} />
+          <div className="end-row">
+            <CallButton kind="decline" label="" onClick={() => void engine.hangup("user")} aria="End call" />
           </div>
-        </>
+        </div>
       )}
 
       {s.status === "ended" && s.summary && (
         <div className="ended">
           <p className={`verdict ${s.summary.verdict}`}>{verdictTitle(s.summary)}</p>
-          <p className="dim">{endedByText(s.summary)}</p>
+          <p className="ended-sub">{endedByText(s.summary)}</p>
           <button className="again" onClick={onReset}>
             Try another call
           </button>
@@ -226,19 +296,64 @@ function CallScreen({ s, engine, onReset }: { s: CallState; engine: CallEngine; 
   );
 }
 
-function RoundButton({ kind, label, onClick }: { kind: "accept" | "decline"; label: string; onClick: () => void }) {
+function CallButton({ kind, label, onClick, aria }: { kind: "accept" | "decline"; label: string; onClick: () => void; aria?: string }) {
   return (
-    <button className={`round ${kind}`} onClick={onClick}>
+    <button className={`call-btn ${kind}`} onClick={onClick} aria-label={aria ?? label}>
       <span className="disc" aria-hidden>
-        <svg viewBox="0 0 24 24" width="26" height="26">
+        <svg viewBox="0 0 24 24" width="30" height="30">
           <path
             fill="currentColor"
             d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"
           />
         </svg>
       </span>
-      {label}
+      {label && <span className="call-btn-label">{label}</span>}
     </button>
+  );
+}
+
+type IconName = "mute" | "keypad" | "speaker" | "plus" | "video" | "person" | "alarm" | "message";
+
+/** Simple hand-drawn icons in the spirit of the iOS call screen (SF Symbols can't be used on the web). */
+function Icon({ name }: { name: IconName }) {
+  const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
+      {name === "mute" && (
+        <>
+          <rect x="9" y="3" width="6" height="11" rx="3" {...p} />
+          <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M4 4l16 16" {...p} />
+        </>
+      )}
+      {name === "keypad" &&
+        [6, 12, 18].flatMap((y) => [6, 12, 18].map((x) => <circle key={`${x}${y}`} cx={x} cy={y - 1} r="1.6" fill="currentColor" />))}
+      {name === "speaker" && (
+        <>
+          <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" {...p} />
+          <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" {...p} />
+        </>
+      )}
+      {name === "plus" && <path d="M12 5v14M5 12h14" {...p} />}
+      {name === "video" && (
+        <>
+          <rect x="3" y="7" width="12" height="10" rx="2.5" {...p} />
+          <path d="M15 10.5l5-3v9l-5-3z" {...p} />
+        </>
+      )}
+      {name === "person" && (
+        <>
+          <circle cx="12" cy="8.5" r="3.5" {...p} />
+          <path d="M5 19.5a7 7 0 0 1 14 0" {...p} />
+        </>
+      )}
+      {name === "alarm" && (
+        <>
+          <circle cx="12" cy="13" r="7" {...p} />
+          <path d="M12 9.5V13l2.5 1.5M5 4.5 3 6.5M19 4.5l2 2" {...p} />
+        </>
+      )}
+      {name === "message" && <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V17A2.5 2.5 0 0 1 4 14.5z" {...p} />}
+    </svg>
   );
 }
 
