@@ -1,41 +1,47 @@
-# Second Ear: a voice that listens with you
+# Second Ear: a voice that listens *with you*
 
 **Track:** Security + Real-Time Assistance · **Author:** Philip Akindipe
 
 ## What I built
 
-Second Ear is a co-pilot that sits on a phone call, listens to the caller, and **whispers into the user's ear** when the call turns into a scam. It doesn't block calls before they ring. It acts *during* the conversation, at the moment a caller asks for a one-time code, pushes a "safe account" transfer or threatens arrest. The user can talk back hands-free: "Second Ear, is this real?", "hang up", "tell my daughter". When the call ends, it gives the user a plain-English summary with next steps, plus a message ready to send to a family member or carer.
+Second Ear is a scam-call co-pilot designed to listen alongside the user and **whisper a warning when a conversation becomes suspicious**. It acts *during* the call, when someone asks for a one-time code, pushes a "safe account" transfer or threatens arrest.
 
-The prototype simulates the call in the browser (scripted caller, live or scripted user). It uses the browser's built-in speech recognition and synthesis, an offline rule-based tactic detector, and an optional LLM engine (Claude or OpenAI). It runs with **no API keys**.
+The user can respond hands-free: "Second Ear, is this real?", "hang up" or "tell my daughter". After the call, it provides a plain-English summary, suggested next steps and a message ready to share with a family member or carer.
+
+The prototype simulates calls in the browser using a scripted caller and live or scripted user responses. It combines browser speech recognition and synthesis, a local rule-based detector and an optional LLM engine (Claude or OpenAI). **The default experience runs without API keys.** Real phone-call integration remains future work.
 
 ## Who it's for
 
-Older adults and anyone less confident with technology: the people most targeted by impersonation fraud, and the least likely to notice a warning on the screen mid-call. Also their families, who usually find out afterwards.
+Older adults and anyone less confident with technology who could benefit from clear guidance during a suspicious call. It also supports families and carers by making it easier to understand what happened and help afterwards.
 
 ## The problem
 
-Caller ID stops many scam calls, but spoofed numbers that show up as "your bank" still get through. Once the call is answered, the scam works through **social pressure in real time**: authority, panic, isolation, then the ask. Today's warnings come at the wrong time (before the call or after the money is gone) and through the wrong channel (a screen the user isn't looking at).
+Call screening helps before someone answers, but a convincing scammer can still create pressure once a conversation begins. The caller builds trust, introduces urgency, discourages outside help and then asks for money or sensitive information.
+
+Second Ear focuses on **the moment that pressure turns into a dangerous request**. A short spoken warning gives the user a chance to pause and reconsider without having to look at a screen.
 
 ## Why voice
 
-- **Eyes busy:** the phone is at the ear, so a pop-up is invisible.
-- **Real time:** the dangerous moment lasts seconds. Second Ear even cuts in *while* the user is reading out a code.
-- **Emotion:** scammers use tone and urgency. A calm voice in the same channel is the most direct counter.
-- **Accessibility:** no app to open, no menu to learn. Speech is the interface everyone already has.
-- **Where I deliberately didn't use voice:** the summary and the family message are text, because once the call is over the user can look at the screen, and the content needs to persist and be shared.
+- **Eyes busy:** someone holding a phone to their ear may miss a visual warning.
+- **Real time:** the prototype can cut in *while* the user reads out digits after a code request.
+- **Calm guidance:** a short instruction such as "Don't share that code" gives the user something concrete to do under pressure.
+- **Hands-free support:** the user can ask for help without typing or navigating menus.
+- **Where I deliberately didn't use voice:** the summary and family message are text so they can be reviewed, saved and shared after the call.
 
 ## Key design choices
 
-- **Talk rarely.** Silence while risk is low, at most one warning per turn, one hang-up offer. Over-warning causes alarm fatigue.
-- **Two engines.** Instant, explainable rules run offline. An LLM catches paraphrased scams. Risk is the max of the two, because a miss costs more than an extra whisper.
-- **Avoid false alarms.** Protective phrases ("we'll never ask for your PIN") aren't counted, and digit-reading only counts as a risk after a code was requested. A genuine bank fraud call stays at 10/100.
-- **Measured.** On 18 labelled calls, rules alone catch **7/11 scams with 0/7 false alarms**. All four misses are paraphrased scams, which is the gap the LLM is there to close.
+- **Talk rarely.** Stay quiet at low risk, give at most one warning per turn and limit repeated hang-up offers. Too many interruptions could make users ignore the assistant.
+- **Two engines.** Local rules provide fast, explainable detection. The optional LLM engine is intended to catch paraphrased scams. Risk is the maximum of the two scores, prioritizing detection while leaving false-alarm testing as an important next step.
+- **Use context.** Protective phrases such as "We'll never ask for your PIN" aren't counted, and reading digits only triggers a warning after a code request.
+- **Easy to try.** The core prototype runs without API keys, so reviewers can test the experience without configuring an external service.
+- **Measured honestly.** On 18 labelled calls, rules alone detected **7/11 scams with 0/7 false alarms**. All four misses were paraphrased scams. This identifies a gap for LLM testing, but does not yet establish that the LLM closes it.
 
-## What I'd do next
+## What I'd do with more time
 
-1. **Real call audio:** an Android `InCallService` or a carrier/VoIP integration (e.g. Twilio media streams), with the whisper mixed into the downlink only and the uplink muted during commands.
-2. **On-device models:** a small local classifier plus streaming ASR, so call audio never leaves the phone. This matters for privacy and for trust.
-3. **Synthetic-voice detection:** flag cloned voices ("Hi Mum, it's me…") using acoustic anti-spoofing features alongside the language signals.
-4. **Better eval:** a few hundred real-world-style scripts across scam types and accents, precision/recall per tactic, and latency measured end to end.
-5. **User research with older adults:** whisper voice, volume, wording and frequency, and whether a "call my daughter" bridge is more useful than a hang-up.
-6. **Network effect:** share anonymised tactic patterns and number reputation back into call-blocking, so a scam caught mid-call helps block the next one before it rings.
+1. **Test with real API keys:** enable the Claude and OpenAI integrations and compare them against the rules-only baseline. I would check whether they catch the four missed scams, introduce false alarms or delay warnings, and measure cost and behaviour during API failures.
+2. **Real call audio:** investigate a supported carrier or VoIP integration, such as Twilio media streams, and assess mobile-platform restrictions. Warnings should reach only the user, and assistant commands should not be audible to the caller.
+3. **On-device models:** explore a small local classifier and streaming speech recognition to keep more sensitive call data on the device and reduce reliance on external services.
+4. **Better evaluation:** test hundreds of varied conversations across scam types, legitimate calls, accents and background noise. Measure precision, recall and the time from a risky statement to a spoken warning.
+5. **User research with older adults:** test whisper voice, volume, wording and frequency, and whether contacting a trusted person is more helpful than offering to hang up.
+6. **Synthetic-voice detection:** investigate acoustic anti-spoofing signals alongside language analysis for impersonation calls such as "Hi Mum, it's me".
+7. **Privacy-preserving feedback:** explore sharing anonymized scam patterns with explicit consent, so lessons from one suspicious call can improve future detection without retaining sensitive conversation details.
