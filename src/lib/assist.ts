@@ -144,7 +144,7 @@ export function buildSummary(args: {
   if (verdict === "normal") actions.push("Nothing to do.");
 
   // Written for a relative or carer, so it describes the call in the third person rather than reusing the whisper wording.
-  const heard = final.tactics.filter((t) => t.id !== "user_disclosing").map((t) => TACTIC_LABELS[t.id].toLowerCase());
+  const heard = final.tactics.filter((t) => t.id !== "user_disclosing").map((t) => TACTIC_LABELS[t.id].replace(/^\w/, (c) => c.toLowerCase()));
   const familyMessage =
     verdict === "normal" && !notify
       ? null

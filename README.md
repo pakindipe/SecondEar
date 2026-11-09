@@ -24,7 +24,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**, pick a call, and press **Start incoming call**, then **Answer**.
+Open **http://localhost:5173**, pick a call, and press **Start incoming call**, then **Accept** on the phone.
 
 **No API keys are needed.** Without keys, Second Ear uses its rule-based risk engine and the browser's built-in speech recognition and text-to-speech. To add the LLM risk engine as well:
 
@@ -32,7 +32,7 @@ Open **http://localhost:5173**, pick a call, and press **Start incoming call**, 
 cp .env.example .env   # then set ANTHROPIC_API_KEY (or OPENAI_API_KEY)
 ```
 
-Restart `npm run dev`. The header badge will show `Risk engine: rules + anthropic`.
+Restart `npm run dev`. The LLM engine switches on automatically, and the status line in the header shows `rules + Claude`.
 
 ### Production build (single server)
 
@@ -56,8 +56,8 @@ Scores 18 labelled call transcripts (11 scam, 7 genuine) with each engine. It ad
 
 | Mode | What happens |
 |---|---|
-| **Auto demo** | Both sides of the call are played for you. Best first look; no mic needed. |
-| **Live mic** | You play the person who answered. Speak your replies (or type them, or click the suggested line). **Use headphones** so the mic doesn't pick up the caller. |
+| **Watching** | Both sides of the call are played for you. Best first look; no mic needed. |
+| **Speaking** | You play the person who answered. Speak your replies (or type them, or click the suggested line). **Use headphones** so the mic doesn't pick up the caller. |
 
 Scenarios (all organisations are fictional):
 
@@ -66,7 +66,7 @@ Scenarios (all organisations are fictional):
 3. **Genuine bank fraud check.** Same bank, mentions fraud and PINs, but asks for nothing. Second Ear should stay quiet. *(This is the false-alarm test.)*
 4. **GP appointment reminder.** Baseline normal call.
 
-Untick **Sound on** to run silently at faster speed (useful for a quick look, or if the browser has no voices).
+Untick **Play audio** to run silently at faster speed (useful for a quick look, or if the browser has no voices).
 
 ---
 
