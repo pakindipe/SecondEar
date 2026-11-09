@@ -1,29 +1,35 @@
 # AI tools used
 
-> **TODO (Philip):** edit this file in your own words before submitting. It should describe what *you* did, decided and checked.
+I used Claude, ChatGPT and Google Gemini as tools to support my research and development of the live scam-call co-pilot. I directed the project, defined its requirements and made the product decisions, while using AI assistance for research, implementation, testing and debugging.
 
 ## Tools
 
 | Tool | Used for |
 |---|---|
-| **Claude Code** (agentic coding assistant, cloud session) | Planning the build, scaffolding the project, writing most of the first-draft code, running end-to-end browser tests (Playwright) and the eval, drafting docs |
-| **Claude / ChatGPT (chat)** | *TODO: e.g. brainstorming scam typologies, reviewing the write-up, if used* |
-| **Claude or OpenAI API** (optional, at runtime) | The LLM risk engine inside the product (`server/llm.ts`) |
+| **Google Gemini** | Supporting my initial research alongside online documentation and helping me explore the problem space |
+| **Claude Code** | Helping plan the implementation, scaffold the project, generate substantial first-draft code, run Playwright browser tests and the evaluation script, and draft documentation |
+| **Claude / ChatGPT** | Providing conversational assistance during the planning and development process |
+| **Claude or OpenAI API** (optional, at runtime) | Providing the product’s LLM risk analysis through `server/llm.ts`, when configured |
 
 ## How I worked with them
 
-1. **Problem and track choice.** I asked Claude Code for a plan. It proposed several directions, and I chose the live scam-call co-pilot because it sits next to Hiya's call-protection work, and because the case for voice is strongest when the phone is at your ear.
-2. **Iterative build.** Claude Code wrote the modules (`rules.ts`, `assist.ts`, `callEngine.ts`, `speech.ts`, UI). I steered the design: no-API-key mode as the default so reviewers can run it, rules + LLM merged with `max`, at most one whisper per turn.
-3. **Testing caught real bugs.** Headless-browser runs and the eval script surfaced:
-   - a regex that missed "gift cards." at the end of a sentence;
-   - a false-alarm risk where reading your own phone number triggered "don't read out that code" (fixed with context-aware digit detection);
-   - a React crash from newer Chromium returning a Promise from `scrollIntoView` inside an effect;
+1. **Research and problem choice.** I spent about a day researching the problem before starting the build. I reviewed online documentation and used Google Gemini to support my research. I knew I wanted to build something relevant to Hiya’s call-protection work. I then used Claude Code to explore possible approaches and chose the live scam-call co-pilot to provide useful spoken warnings during suspicious calls.
+
+2. **Iterative build.** I used Claude Code to help turn my requirements into an implementation, including `rules.ts`, `assist.ts`, `callEngine.ts`, `speech.ts` and the UI. It generated substantial first-draft code, while I steered the design and behaviour. My requirements included a default mode that works without an API key, combining rules-based and LLM risk scores using `max`, and allowing at most one whisper per turn.
+
+3. **Testing and debugging.** I used Claude Code to run headless-browser tests and the evaluation script to help identify issues and guide fixes. These surfaced:
+   - a regex that missed “gift cards.” at the end of a sentence;
+   - a false warning when someone read their own phone number, addressed with context-aware digit detection;
+   - a React effect issue involving a Promise returned by `scrollIntoView`;
    - a field-name collision (`kind`) between whispers and transcript rows;
-   - speech synthesis racing through the call when no voices are installed.
-4. **What I verified myself.** *TODO: e.g. ran it in Chrome with sound and mic, tuned the whisper wording, re-read every module so I can explain it, checked the eval numbers.*
+   - speech synthesis racing through the call when no voices were installed.
 
-## What AI did *not* decide
+4. **What I verified myself.** I tested the app in Chrome to check the microphone, audio playback and call flow. I tried both suspicious and legitimate call examples to assess whether warnings appeared at appropriate moments. I reviewed the whisper wording to keep it short, clear and useful, and checked that the default mode worked without an API key. I also reviewed the evaluation results to understand which scenarios the rules engine detected and where it still missed signals.
 
-- The problem, the track and the target user.
-- The whisper policy trade-off: prefer rare, high-value interruptions over constant commentary.
-- Reporting the rules engine's misses honestly in the eval, instead of tuning the regexes to the test set.
+## Decisions I owned
+
+- Selecting the problem, track and target user after researching and exploring possible approaches.
+- Prioritizing occasional, useful warnings over constant commentary.
+- Making the product runnable without an API key so reviewers could try it easily.
+- Combining rules-based and LLM risk scores using the higher score.
+- Reporting the rules engine’s misses honestly rather than tuning the rules specifically to the evaluation examples.
