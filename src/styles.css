@@ -84,7 +84,7 @@ q { quotes: "“" "”"; }
 @media (max-width: 680px) {
   .app { padding: 20px 16px 48px; }
   .layout { grid-template-columns: 1fr; }
-  .handset { justify-self: center; max-width: 320px; }
+  .handset { justify-self: center; }
 }
 
 /* ---------- controls ---------- */
@@ -119,10 +119,13 @@ q { quotes: "“" "”"; }
 
 /* ---------- handset (iOS call screen) ---------- */
 /* System font: on Apple devices this is SF Pro, so the phone renders like real iOS. */
-.handset { --ios: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif; width: 100%; max-width: 340px; aspect-ratio: 9 / 19.5; background: #0b0b0c; border-radius: 52px; padding: 10px; box-shadow: 0 0 0 1.5px #3a3a3c inset, 0 0 0 4px #1c1c1e, 0 30px 60px -30px rgba(0, 0, 0, 0.5); font-family: var(--ios); -webkit-font-smoothing: antialiased; }
+.handset { --ios: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif; width: 340px; height: 736px; display: flex; flex-shrink: 0; background: #0b0b0c; border-radius: 52px; padding: 10px; box-shadow: 0 0 0 1.5px #3a3a3c inset, 0 0 0 4px #1c1c1e, 0 30px 60px -30px rgba(0, 0, 0, 0.5); font-family: var(--ios); -webkit-font-smoothing: antialiased; }
 @media (min-width: 1001px) { .handset { position: sticky; top: 24px; } }
+/* Explicit sizes (not aspect-ratio): Safari doesn't give an aspect-ratio box a definite height for its children. */
+@media (max-width: 1180px) { .handset { width: 320px; height: 693px; } }
+@media (max-width: 680px) { .handset { width: 300px; height: 650px; } }
 
-.screen { position: relative; height: 100%; border-radius: 43px; overflow: hidden; color: #fff; display: flex; flex-direction: column;
+.screen { position: relative; flex: 1; min-width: 0; min-height: 0; border-radius: 43px; overflow: hidden; color: #fff; display: flex; flex-direction: column;
   /* stands in for iOS's blurred contact-poster background */
   background: radial-gradient(120% 70% at 50% 0%, #4b5563 0%, #1f2937 45%, #0b0f14 100%); transition: background 0.8s ease; }
 .handset.level-suspicious .screen { background: radial-gradient(120% 70% at 50% 0%, #7a5a1f 0%, #3a2a12 45%, #100c07 100%); }
